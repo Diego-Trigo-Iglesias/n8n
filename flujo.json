@@ -1,0 +1,128 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "path": "buscar-posts",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300],
+      "webhookId": "abc123"
+    },
+    {
+      "parameters": {
+        "url": "https://jsonplaceholder.typicode.com/posts?userId={{$json[\"userId\"]}}",
+        "responseFormat": "json"
+      },
+      "name": "Get Posts by userId",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 2,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const keywords = $json[\"keywords\"]?.map(k => k.toLowerCase()) || [];\nconst filtered = items.filter(item => {\n  const title = item.json.title.toLowerCase();\n  return keywords.some(keyword => title.includes(keyword));\n});\nreturn filtered;"
+      },
+      "name": "Filter by keywords",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$items().length}}",
+              "operation": "larger",
+              "value2": 0
+            }
+          ]
+        }
+      },
+      "name": "IF any match",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "fromEmail": "test@example.com",
+        "toEmail": "you@example.com",
+        "subject": "Posts encontrados con tus keywords",
+        "text": "Resultados:\n\n{{$json[\"title\"]}}"
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 1,
+      "position": [1000, 200]
+    },
+    {
+      "parameters": {
+        "logLevel": "info",
+        "message": "No se encontraron coincidencias"
+      },
+      "name": "Console Log",
+      "type": "n8n-nodes-base.console",
+      "typeVersion": 1,
+      "position": [1000, 400]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Get Posts by userId",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Posts by userId": {
+      "main": [
+        [
+          {
+            "node": "Filter by keywords",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter by keywords": {
+      "main": [
+        [
+          {
+            "node": "IF any match",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF any match": {
+      "main": [
+        [
+          {
+            "node": "Send Email",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Console Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "name": "Flujo Dinámico de Aprendizaje",
+  "active": false
+}
